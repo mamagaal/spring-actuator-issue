@@ -1,0 +1,7 @@
+
+def centralRepos = {
+    mavenCentral()
+    jcenter()
+}
+project.buildscript.repositories(centralRepos)
+repositories(centralRepos)

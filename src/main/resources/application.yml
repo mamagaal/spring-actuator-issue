@@ -1,0 +1,174 @@
+server:
+  port: 8082
+
+dataload:
+  catalog:
+    enabled: false
+
+tablespaceData: USERS
+
+spring:
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+          autoAddPartitions: true
+          minPartitionCount: 5
+          replicationFactor: 5
+      bindings:
+        output-pricing:
+          destination: pricing.electricity.single.evaluation.request
+          contentType: application/json
+          producer:
+            partition-key-expression: headers['partitionKey'] - 1
+            partition-count: 5
+        input-pricing:
+          destination: pricing.electricity.single.evaluation.response
+          contentType: application/json
+          group: demo
+          consumer:
+            partitioned: true
+            concurrency: 5
+
+  datasource:
+    platform: h2
+    url: jdbc:h2:mem:myDb;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: sa
+    driverClassName: org.h2.Driver
+  tomcat:
+    initialSize: 5
+    max-active: 20
+    testWhileIdle: true
+    timeBetweenEvictionRunsMillis: 5000
+    validationQuery: SELECT 1 FROM DUAL
+
+  jpa:
+    properties:
+      hibernate:
+        use_sql_comments: true
+        format_sql: true
+        show_sql: false
+        dialect: org.hibernate.dialect.H2Dialect
+    hibernate:
+      # Hibernate ddl auto (create, create-drop, update): with "create-drop" the database
+      # schema will be automatically created afresh for every start of application
+      ddl-auto: validate
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+  kafka:
+    bootstrap-servers: localhost:9092
+
+management:
+  metrics:
+    web.server.auto-time-requests: false
+  endpoints:
+    web.exposure.include: health,info,metrics,prometheus
+
+---
+
+spring:
+  profiles: h2
+  datasource:
+    platform: h2
+    url: jdbc:h2:mem:myDb;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: sa
+    driverClassName: org.h2.Driver
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+  jackson:
+    serialization.indent_output: true
+keycloak:
+  enabled: false
+
+---
+spring:
+  profiles: default
+  datasource:
+    url: jdbc:h2:mem:myDb;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: sa
+  jackson:
+    serialization.indent_output: true
+
+---
+spring:
+  profiles: docker
+
+  datasource:
+    url: jdbc:oracle:thin:@oracle:1521:xe
+    username: offering
+    password: offering
+
+
+---
+spring:
+  profiles: pre
+
+  datasource:
+    url: jdbc:oracle:thin:@OFFERING_BBDD_URL:OFFERING_BBDD_PORT/OFFERING_BBDD_OFFERING_NAME
+    username: OFFERING_BBDD_USER
+    password: OFFERING_BBDD_PASS
+
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: KAFKA_HOST:KAFKA_PORT
+      bindings:
+        pricing-ele-single-evaluation-request:
+          destination: pricing.electricity.single.evaluation.request
+          contentType: application/json
+        pricing-ele-single-evaluation-response:
+          destination: pricing.electricity.single.evaluation.response
+          contentType: application/json
+          group: demo
+        pricing-gas-single-evaluation-request:
+          destination: pricing.gas.single.evaluation.request
+          contentType: application/json
+        pricing-gas-single-evaluation-response:
+          destination: pricing.gas.single.evaluation.response
+          contentType: application/json
+          group: demo
+        renewal-term-ele-response:
+          destination: renewal.term.ele.response
+          contentType: application/json
+          group: demo
+        renewal-term-ele-request:
+          destination: renewal.term.ele.request
+          contentType: application/json
+        renewal-term-gas-response:
+          destination: renewal.term.gas.response
+          contentType: application/json
+          group: demo
+        renewal-term-gas-request:
+          destination: renewal.term.gas.request
+          contentType: application/json
+        creditcheck-update-response:
+          destination: credit-check.update.response
+          contentType: application/json
+          group: demo
+  kafka:
+    bootstrap-servers: KAFKA_HOST:KAFKA_PORT
+
+server:
+  port: 8080
+
+---
